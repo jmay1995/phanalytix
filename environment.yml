@@ -1,0 +1,29 @@
+name: phanalytix
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.6
+  # - bokeh
+  # - click
+  # - colorcet
+  # - coverage
+  - ipython
+  - jupyter
+  - mypy
+  - matplotlib
+  - numpy
+  - pandas=0.23.2
+  - pylint=1.9.2
+  - requests
+  # - pytest
+  # - snakeviz
+  # - sphinx
+  # - xlrd
+  # - xlsxwriter
+  # - yapf
+  # - bokeh
+  # - matplotlib
+  # - pip:
+  #   - datacompy
+  #   - mypy-extensions
