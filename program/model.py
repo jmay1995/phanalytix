@@ -29,6 +29,8 @@ class Phanalytix():
 
         if (years == []) and (dates == []):
             info('A - Model fed with no input years or dates')
+            debug('test')
+            print('(print) A - Model fed with no input years or dates')
             self.years = self.get_years()
             self.dates = self.get_dates_from_years()
         elif years == []:
