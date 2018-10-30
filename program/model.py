@@ -29,8 +29,6 @@ class Phanalytix():
 
         if (years == []) and (dates == []):
             info('A - Model fed with no input years or dates')
-            debug('test')
-            print('(print) A - Model fed with no input years or dates')
             self.years = self.get_years()
             self.dates = self.get_dates_from_years()
         elif years == []:
@@ -49,11 +47,14 @@ class Phanalytix():
             self.years = years
             self.dates = self.get_dates_from_years()
             self.dates.extend(dates)
+
+        info('List of Dates and Years processed')
         
         self.shows = self.get_showdata_from_dates()
         
     @classmethod
     def load_model(cls, name, shows_attended, years=[], dates=[]):
+        info('Loading model')
         phanalytix = Phanalytix(name, shows_attended, years, dates)
         return phanalytix
     
@@ -80,6 +81,7 @@ class Phanalytix():
         url_years = (PHISHIN_URL + '/years')
         response = requests.get(url_years).json()
         data = response['data']
+        info('Sucessfully retrieved list of years Phish has played shows in')
         return data
     
     def get_dates_from_years(self):
@@ -91,12 +93,18 @@ class Phanalytix():
             url_year = (PHISHIN_URL + '/years/' + year)
             response = requests.get(url_year).json()
             data = response['data']
+            show_count = 0
             for show in data:
                 date = show['date']
                 dates.append(date)
+                show_count +=1
+            info('Identified {} dates with concerts played in {}'.format(show_count, year))
         return dates
 
     def get_showdata_from_dates(self):
+        '''
+        Create a Show object based on the Phish.net data for a certain date
+        '''
         shows = OrderedDict()
         url_base = (PHISHNET_URL + 'setlists/get?apikey=' + PHISHNET_KEY)
         for date in self.dates:
@@ -105,6 +113,7 @@ class Phanalytix():
             data = response['response']['data']
             if data != []:
                 data = data[0]
+                #Create an instance of the Shows class for the date
                 show = Shows.create_shows(data, self)
                 shows[date] = show
         return shows
@@ -124,6 +133,7 @@ class Shows():
         self.setlist = setlist
         self.notes = notes
         self.rating = rating
+        info('Show data processed for date {}'.format(name))
         
         
     @classmethod
@@ -131,6 +141,10 @@ class Shows():
         name = show_dict['showdate']
         showid = show_dict['showid']
         short_date = show_dict['short_date']
+        # long_date = show_dict['long_date']
+        # relative_date = show_dict['relative_date']
+        # url = show_dict['url']
+        # gapchart = show_dict['gapchart']
         artist = show_dict['artist']
         venueid = show_dict['venueid']
         venue = show_dict['venue']
