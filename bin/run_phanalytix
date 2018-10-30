@@ -6,7 +6,11 @@ import logging
 from program.runner import runner
 
 if __name__ == '__main__':
-    #Set up logging environment
+
+    #Disable Logging from the Requests package everytime we connect to an API
+    urllib3_log = logging.getLogger("urllib3")
+    urllib3_log.setLevel(logging.CRITICAL)
+
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
     ch = logging.StreamHandler(sys.stdout)
@@ -15,5 +19,7 @@ if __name__ == '__main__':
         '%(asctime)s %(levelname)-8s %(module)-8s %(funcName)-12s %(message)s', datefmt='%H:%M:%S')
     ch.setFormatter(formatter)
     root.addHandler(ch)
+
+
 
     runner()
