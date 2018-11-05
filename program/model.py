@@ -14,6 +14,7 @@ from logging import debug, info
 from collections import OrderedDict
 
 from program.params import PHISHIN_URL, PHISHNET_URL, PHISHNET_KEY, PHISHNET_PUBLIC, DATES_ATTENDED
+from program.utils import MyHTMLParser
 
 #Define utility functions for serializing object states
 def listify(list_of_obj):
