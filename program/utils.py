@@ -8,7 +8,6 @@ class MyHTMLParser(HTMLParser):
 
     def handle_endtag(self, tag):
         pass
-        # print("Encountered an end tag :", tag)
 
     def handle_data(self, data):
         self.setlist.append(data)

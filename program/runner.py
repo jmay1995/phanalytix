@@ -7,6 +7,8 @@ from program.params import DATES_ATTENDED
 
 def runner():
 
+    #Add capacity for click to move args to command line
+
     # Load the object Model with Show Data
     # model = Phanalytix.load_model('Phanalytix', DATES_ATTENDED)
 
