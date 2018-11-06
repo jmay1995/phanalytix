@@ -9,11 +9,13 @@ josephmay95@hotmail.com
 import requests
 import logging
 import sys
+import string
 
 from logging import debug, info
 from collections import OrderedDict
 
 from program.params import PHISHIN_URL, PHISHNET_URL, PHISHNET_KEY, PHISHNET_PUBLIC, DATES_ATTENDED
+from program.utils import MyHTMLParser
 
 #Define utility functions for serializing object states
 def listify(list_of_obj):
@@ -133,8 +135,11 @@ class Shows():
         self.setlist = setlist
         self.notes = notes
         self.rating = rating
-        info('Show data processed for date {}'.format(name))
-        
+
+        self.songs = self.get_song_data_from_setlist()
+
+        info('Show data processed for date {} \n'.format(name))
+ 
         
     @classmethod
     def create_shows(cls, show_dict, model = None):
@@ -170,6 +175,107 @@ class Shows():
     def to_dict(self):
         show = OrderedDict()
         return show
+
+    def get_song_data_from_setlist(self):
+        '''
+        When we pull setlist data from the API it comes in HTML format.
+        This method parses that data into a processable format, splitting
+        the long string of HTML into song names and performance details
+        '''
+        #Initialize a blank dict of song objects which we will populate
+        songs = OrderedDict()
+
+        #Parse the HTML data into a list of strings
+        parser = MyHTMLParser()
+        parser.setlist = []
+        parser.feed(self.setlist)
+        setlist = parser.setlist.copy()
+
+        #remove blanks from the list
+        try:
+            setlist.remove('\n')
+        except: pass
+
+        #Iterate through the list and load song datq
+        for i, val in enumerate(setlist):
+            #Strip  value to exclude white space
+            val = val.strip()
+            
+            if val in ['Set 1', 'Set 2', 'Set 3', 'Encore', 'Encore 2']:
+                #Identify The set which the songs were played in
+                set_name = val
+            else:
+                if '[' not in val:
+                    #Do not count notes as songs in the setlist
+                    if val not in string.punctuation and val != '->':
+                        name = val
+                        notes = None
+
+                        #If we are indexing first or last song of a show avoid error and list transition.
+                        if (i-1) < 0:
+                            transition_before = ':'
+                        else:
+                            transition_before = setlist[(i-1)]
+
+                        if (i+1) > (len(setlist)-1):
+                            transition_after = ':'
+                        else:
+                            transition_after = setlist[(i+1)]
+
+                        if '[' in transition_after:
+                            #Do not count song notes as transition data
+                            notes = transition_after
+
+                            if (i+2) > (len(setlist)-1):
+                                transition_after = ':'
+                            else:
+                                transition_after = setlist[(i+2)]
+
+                        #Create an instance of the Song class for this show
+                        song = Songs.create_song(name, transition_before, transition_after, set_name, notes, self)
+                        songs[name] = song
+        return songs
+
+class Songs():
+    def __init__(self, show, name, transition_before, transition_after, set_name, notes):
+        self.show = show
+        self.name = name
+        self.transition_before = transition_before
+        self.transition_after = transition_after
+        self.set_name = set_name
+        self.notes = notes
+
+        self.length = 0
+        self.gap = 0
+        self.rotation = 0 #system
+        self.artist = 'Phish' #system
+        self.debut = None #system
+
+        info('Processed song {}, {}'.format(self.show, self.name))
+
+    @classmethod
+    def create_song(cls, name, transition_before, transition_after, set_name, notes, show = None):
+        #Create an object of the song class
+        song = Songs(show, name, transition_before, transition_after, set_name, notes)
+        #Return the song object to the list of songs in the show class
+        return song
+
+    def __str__(self):
+        return self.name
+    
+    def __repr__(self):
+        st = ("Show({}, Name{}, transition_before{}, transition_after{}, "
+            "set{}, notes{}, length{}, gap{}, rotation{}, artist{}, "
+            "debut{}").format(self.show, self.name, self.transition_before, 
+            self.transition_after, self.set, self.notes, self.length, self.gap,
+            self.rotation, self.artist, self.debut)
+        return st
+    
+    def todict(self):
+        '''
+        Output a Dict representation of the model
+        '''
+        return
 
     
     
