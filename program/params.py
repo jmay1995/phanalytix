@@ -1,4 +1,6 @@
 
+import os
+
 # Base URL for the phish.in API
 PHISHIN_URL = 'http://phish.in/api/v1'
 
@@ -21,3 +23,6 @@ DATES_ATTENDED = ['2014-07-25', '2015-08-14', '2015-08-15', '2015-08-16',
                 '2018-08-08', '2018-08-10', '2018-08-11', '2018-08-12',
                 '2018-10-16', '2018-10-17', '2018-10-19', '2018-10-20',
                 '2018-10-21', '2018-10-26', '2018-10-27']
+
+WORKINGDIR = os.getcwd()
+OUTPUTDIR = os.path.join(os.getcwd(), 'Outputs')
