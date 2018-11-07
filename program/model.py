@@ -255,9 +255,11 @@ class Songs():
 
     @classmethod
     def create_song(cls, name, transition_before, transition_after, set_name, notes, show = None):
-        #Create an object of the song class
+        '''
+        Create an object of the song class and return it into the dictonary of
+        songs stored in the show class
+        '''
         song = Songs(show, name, transition_before, transition_after, set_name, notes)
-        #Return the song object to the list of songs in the show class
         return song
 
     def __str__(self):
@@ -279,3 +281,4 @@ class Songs():
 
     
     
+#scrape data as tracks from http://phish.net/song
