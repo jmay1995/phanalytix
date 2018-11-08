@@ -208,6 +208,8 @@ class Shows():
         parser.feed(self.setlist)
         setlist = parser.setlist.copy()
 
+        set_ids = ['Set 1', 'Set 2', 'Set 3', 'Encore', 'Encore 2']
+
         #remove blanks from the list
         try:
             setlist.remove('\n')
@@ -218,12 +220,12 @@ class Shows():
             #Strip  value to exclude white space
             val = val.strip()
             
-            if val in ['Set 1', 'Set 2', 'Set 3', 'Encore', 'Encore 2']:
-                #Identify The set which the songs were played in
+            #Identify The set which the songs were played in
+            if val in set_ids:
                 set_name = val
             else:
+                #Do not count notes as songs in the setlist
                 if '[' not in val:
-                    #Do not count notes as songs in the setlist
                     if val not in string.punctuation and val != '->':
                         name = val
                         notes = None
@@ -233,20 +235,49 @@ class Shows():
                             transition_before = ':'
                         else:
                             transition_before = setlist[(i-1)]
-
                         if (i+1) > (len(setlist)-1):
                             transition_after = ':'
                         else:
                             transition_after = setlist[(i+1)]
+                            
+                        #Ensure that we do not reference the name of the set as a transition
+                        if transition_after in set_ids:
+                            transition_after = ':'
 
+                        #Do not count song notes as transition data
                         if '[' in transition_after:
-                            #Do not count song notes as transition data
                             notes = transition_after
 
                             if (i+2) > (len(setlist)-1):
                                 transition_after = ':'
                             else:
                                 transition_after = setlist[(i+2)]
+
+
+                            ###################################################
+                            ## Look forward through the rest of the list and match the notes together
+                            note_idx = (i+2)
+                            multiple_tags = False
+                            # Identify the location of the footnote data
+                            for x in range(len(setlist)-note_idx):
+                                #Start your loop after the tag
+                                x += note_idx
+                                
+                                # Pair the footnote tag with its data, but ensure its not an identical tag
+                                if (setlist[x][:3]) == notes:
+                                   
+                                   #Do not assign other tags as the notes
+                                    if len(setlist[x]) <= 3:
+                                        multiple_tags = True
+                                    else:
+                                        notes = setlist[x]
+
+                                        #Do not delete the data if there are other tags that need it
+                                        if multiple_tags == False:   
+                                            del setlist[x]
+                                            break
+
+
 
                         #Create an instance of the Song class for this show
                         song = Songs.create_song(name, transition_before, transition_after, set_name, notes, self)
