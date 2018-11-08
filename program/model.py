@@ -15,7 +15,7 @@ from logging import debug, info
 from collections import OrderedDict
 
 from program.params import PHISHIN_URL, PHISHNET_URL, PHISHNET_KEY, PHISHNET_PUBLIC, DATES_ATTENDED
-from program.utils import MyHTMLParser
+from program.utils import Setlist_HTMLParser, ArtistVenue_HTMLParser
 
 #Define utility functions for serializing object states
 def listify(list_of_obj):
@@ -122,7 +122,7 @@ class Phanalytix():
 
 class Shows():
     def __init__(self, model, name, showid, short_date, artist, venueid, venue, 
-                 location, setlist, notes, rating):
+                 location, city, state, country, setlist, notes, rating):
     
         self.model = model
         self.name = name
@@ -131,7 +131,10 @@ class Shows():
         self.artist = artist
         self.venueid = venueid
         self.venue = venue
-        self.location = location 
+        self.location = location
+        self.city = city
+        self.state = state
+        self.country = country 
         self.setlist = setlist
         self.notes = notes
         self.rating = rating
@@ -157,19 +160,33 @@ class Shows():
         setlist = show_dict['setlistdata']
         notes = show_dict['setlistnotes']
         rating = show_dict['rating']
+
+        #Parse items still in HTML format into processed text
+        parser = ArtistVenue_HTMLParser()
+        parser.feed(artist)
+        artist = parser.item
+        
+        parser.feed(venue)
+        venue = parser.item
+
+        #Break up Location into items for City, State, and Country
+        (city, state, country) = location.split(', ')
     
+        #Create an object of the Shows class to pass back into a list of shows
         show = Shows(model, name, showid, short_date, artist, venueid, venue,
-                     location, setlist, notes, rating)
+                     location, city, state, country, setlist, notes, rating)
         return show
     
     def __str__(self):
         return self.name
     
     def __repr__(self):
-        st = ("Show({}, showid{}, short_date{}, artist{}, venueid{}, venue{},"
-                "location{}, setlist{}, notes{}, rating{})").format(self.name, 
-                        self.showid, self.short_date, self.artist, self.venueid,
-                        self.venue, self.location, self.setlist, self.notes, self.rating)
+        st = ("Show({}, showid{}, short_date{}, artist{}, venueid{}, venue{}, "
+                "location{}, city{}, state{}, country{}. setlist{}, notes{}, "
+                "rating{})").format(self.name, self.showid, self.short_date, 
+                self.artist, self.venueid, self.venue, self.location, 
+                self.city, self.state, self.country, self.setlist, 
+                self.notes, self.rating)
         return st
     
     def to_dict(self):
@@ -186,7 +203,7 @@ class Shows():
         songs = OrderedDict()
 
         #Parse the HTML data into a list of strings
-        parser = MyHTMLParser()
+        parser = Setlist_HTMLParser()
         parser.setlist = []
         parser.feed(self.setlist)
         setlist = parser.setlist.copy()

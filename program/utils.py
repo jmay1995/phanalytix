@@ -47,6 +47,9 @@ class WriteOutputs():
                 outputdict = OrderedDict(Date = [show.short_date])
                 outputdict['Venue'] = show.venue
                 outputdict['Location'] = show.location
+                outputdict['City'] = show.city
+                outputdict['State'] = show.state
+                outputdict['Country'] = show.country
                 outputdict['Rating'] = show.rating
                 outputdict['Artist'] = show.artist
                 
@@ -60,14 +63,12 @@ class WriteOutputs():
                 row = pd.DataFrame(data = outputdict)
                 self.output_df = self.output_df.append(row, ignore_index=True, sort=False)
 
-class MyHTMLParser(HTMLParser):
-    
-    def handle_starttag(self, tag, attrs):
-        pass
-        # print("Encountered a start tag:", tag)
-
-    def handle_endtag(self, tag):
-        pass
+class Setlist_HTMLParser(HTMLParser):
 
     def handle_data(self, data):
         self.setlist.append(data)
+
+class ArtistVenue_HTMLParser(HTMLParser):
+
+    def handle_data(self, data):
+        self.item = data
