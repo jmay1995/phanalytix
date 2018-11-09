@@ -4,10 +4,6 @@ channels:
   - defaults
 dependencies:
   - python=3.6
-  # - bokeh
-  # - click
-  # - colorcet
-  # - coverage
   - ipython
   - jupyter
   - mypy
@@ -16,6 +12,11 @@ dependencies:
   - pandas=0.23.2
   - pylint=1.9.2
   - requests
+  - click
+  #- HTMLParser
+  # - bokeh
+  # - colorcet
+  # - coverage
   # - pytest
   # - snakeviz
   # - sphinx

@@ -41,12 +41,13 @@ class Phanalytix():
         elif dates == []:
             #This allows the user to input a list of years and only query those years
             info('C - Model fed with no input dates, and years: {}'.format(years))
-            self.years = years
+
+            self.years = years.split(' ')
             self.dates = self.get_dates_from_years()
         else:
             #This allows the user to input a list of years and dates and combine the two
             info('D - Model fed with input years: {} and input dates: {}'.format(years, dates))
-            self.years = years
+            self.years = years.split(' ')
             self.dates = self.get_dates_from_years()
             self.dates.extend(dates)
 
@@ -170,6 +171,7 @@ class Shows():
         venue = parser.item
 
         #Break up Location into items for City, State, and Country
+        debug(location)
         (city, state, country) = location.split(', ')
     
         #Create an object of the Shows class to pass back into a list of shows
