@@ -10,7 +10,7 @@ from program.params import DATES_ATTENDED
 #Enable default values for the command line
 @click.command()
 @click.option('--years', default=[], help='Years to limit data pull to, seperated by spaces')
-@click.option('--dates', default=[], help='Show dates to limit data pull to')
+@click.option('--dates', default=[], help='Show dates to limit data pull to, YY-MM-DD, seperated by spaces')
 def runner(years, dates):
 
     #Add capacity for click to move args to command line
