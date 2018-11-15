@@ -60,6 +60,8 @@ class WriteOutputs():
                 outputdict['After'] = song.transition_after
                 outputdict['Notes'] = song.notes
                 
+                outputdict['ShowNotes'] = show.notes
+                
                 row = pd.DataFrame(data = outputdict)
                 self.output_df = self.output_df.append(row, ignore_index=True, sort=False)
 
