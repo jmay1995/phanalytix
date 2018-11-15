@@ -172,7 +172,10 @@ class Shows():
 
         #Break up Location into items for City, State, and Country
         debug(location)
-        (city, state, country) = location.split(', ')
+        location_list = location.split(', ')
+        location_list = [c for c in location_list if c != '']
+        (city, state, country) = location_list
+
     
         #Create an object of the Shows class to pass back into a list of shows
         show = Shows(model, name, showid, short_date, artist, venueid, venue,
