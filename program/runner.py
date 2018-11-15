@@ -13,14 +13,8 @@ from program.params import DATES_ATTENDED
 @click.option('--dates', default=[], help='Show dates to limit data pull to, YY-MM-DD, seperated by spaces')
 def runner(years, dates):
 
-    #Add capacity for click to move args to command line
-
     # Load the object Model with Show Data
     model = Phanalytix.load_model('Phanalytix', DATES_ATTENDED, years, dates)
-
-    #Move away from class method initialization to a direct declaration
-    
-    # model = Phanalytix.load_model('Phanalytix', DATES_ATTENDED, years = ['2018'])
 
     #Parse contents as dataFrames and write to file
     outputs = WriteOutputs(model)
