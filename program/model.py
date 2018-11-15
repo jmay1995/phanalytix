@@ -51,7 +51,7 @@ class Phanalytix():
             self.dates.extend(dates.split(' '))
 
         info('List of Dates and Years processed')
-        
+        self.tours = self.get_tour_names()    
         self.shows = self.get_showdata_from_dates()
         
     @classmethod
@@ -103,6 +103,21 @@ class Phanalytix():
             info('Identified {} dates with concerts played in {}'.format(show_count, year))
         return dates
 
+    def get_tour_names(self):
+        '''
+        Creates a dictionary of all Tour names and shows from them for 
+        reference when parsing show details
+        '''
+        url_tours = (PHISHIN_URL + '/tours')
+        response = requests.get(url_tours).json()
+        data = response['data']
+
+        tour_dict = {}
+        for item in data:
+            for shows in item['shows']:
+                tour_dict[shows['date']] = item['name']
+        return tour_dict
+
     def get_showdata_from_dates(self):
         '''
         Create a Show object based on the Phish.net data for a certain date
@@ -119,6 +134,7 @@ class Phanalytix():
                 show = Shows.create_shows(data, self)
                 shows[date] = show
         return shows
+
 
 class Shows():
     def __init__(self, model, name, showid, short_date, artist, venueid, venue, 
@@ -138,6 +154,8 @@ class Shows():
         self.setlist = setlist
         self.notes = notes
         self.rating = rating
+        
+        self.tour = self.model.tours[self.name]
 
         self.songs = self.get_song_data_from_setlist()
 
@@ -186,10 +204,10 @@ class Shows():
     def __repr__(self):
         st = ("Show({}, showid{}, short_date{}, artist{}, venueid{}, venue{}, "
                 "location{}, city{}, state{}, country{}. setlist{}, notes{}, "
-                "rating{})").format(self.name, self.showid, self.short_date, 
+                "rating{}, tour{})").format(self.name, self.showid, self.short_date, 
                 self.artist, self.venueid, self.venue, self.location, 
                 self.city, self.state, self.country, self.setlist, 
-                self.notes, self.rating)
+                self.notes, self.rating, self.tour)
         return st
     
     def to_dict(self):

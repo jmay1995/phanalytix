@@ -52,6 +52,7 @@ class WriteOutputs():
                 outputdict['Country'] = show.country
                 outputdict['Rating'] = show.rating
                 outputdict['Artist'] = show.artist
+                outputdict['Tour'] = show.tour
                 
                 # Bring in song data
                 outputdict['Set'] = song.set_name
