@@ -184,7 +184,12 @@ class Shows():
         #Break up Location into items for City, State, and Country
         location_list = location.split(', ')
         location_list = [c for c in location_list if c != '']
-        (city, state, country) = location_list
+
+        if len(location_list) == 2:
+            (city, country) = location_list
+            state = country
+        else:
+            (city, state, country) = location_list
 
     
         #Create an object of the Shows class to pass back into a list of shows
