@@ -30,3 +30,9 @@ OUTPUTDIR = os.path.join(os.getcwd(), 'Outputs')
 #Details for Scraping System Song original data
 ORIGINAL_ARTIST_URL = 'https://phish.net/song'
 ORIGINAL_ARTIST_TABLE_CLASS = 'table table-striped table-hover table-responsive'
+
+NON_COVER_ARTISTS = ['Phish', 'Trey Anastasio', 'Page McConnell', 'Mike Gordon',
+                    'Mike Gordon Band', 'Jon Fishman', 'Tom Marshall', 'Amfibian',
+                    'New York!', 'Vida Blue', 'Pork Tornado', 'Touchpants', 
+                    'Space Antelope', 'Steve Pollak', 'The Dude of Life', 
+                    'The Dude of Life and Phish', 'Jeff Holdsworth']

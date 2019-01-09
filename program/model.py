@@ -22,7 +22,8 @@ from program.params import (PHISHIN_URL,
                             PHISHNET_PUBLIC,
                             DATES_ATTENDED,
                             ORIGINAL_ARTIST_URL,
-                            ORIGINAL_ARTIST_TABLE_CLASS)
+                            ORIGINAL_ARTIST_TABLE_CLASS,
+                            NON_COVER_ARTISTS)
 
 #Define utility functions for serializing object states
 def listify(list_of_obj):
@@ -379,6 +380,10 @@ class SystemSongs():
         self.current_gap = current_gap
         self.aliases = aliases
 
+        self.cover = 0
+        if self.artist not in NON_COVER_ARTISTS:
+            self.cover = 1
+
         self.shows_since_debut = None
         self.rotation = None
         
@@ -464,9 +469,9 @@ class SystemSongs():
     
     def __repr__(self):
         st = ("SystemSong(name{}, artist{}, times{}, debut{}, last{}, current_gap{}, "
-            "aliases{}, shows_since_debut{}, rotation{})").format(self.name,
+            "aliases{}, cover{}, shows_since_debut{}, rotation{})").format(self.name,
             self.artist, self.times, self.debut, self.last, self.current_gap,
-            self.aliases, self.shows_since_debut, self.rotation)
+            self.aliases, self.cover, self.shows_since_debut, self.rotation)
         return st
     
     def todict(self):
