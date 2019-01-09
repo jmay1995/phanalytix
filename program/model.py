@@ -15,9 +15,14 @@ from logging import debug, info
 from collections import OrderedDict
 from bs4 import BeautifulSoup
 
-from program.params import PHISHIN_URL, PHISHNET_URL, PHISHNET_KEY, PHISHNET_PUBLIC,\
-                    DATES_ATTENDED, ORIGINAL_ARTIST_URL, ORIGINAL_ARTIST_TABLE_CLASS
 from program.utils import Setlist_HTMLParser, ArtistVenue_HTMLParser, SystemSong_HTMLParser
+from program.params import (PHISHIN_URL,
+                            PHISHNET_URL,
+                            PHISHNET_KEY,
+                            PHISHNET_PUBLIC,
+                            DATES_ATTENDED,
+                            ORIGINAL_ARTIST_URL,
+                            ORIGINAL_ARTIST_TABLE_CLASS)
 
 #Define utility functions for serializing object states
 def listify(list_of_obj):
@@ -302,11 +307,10 @@ class Songs():
         self.set_name = set_name
         self.notes = notes
 
+        self.systemsong = self.associate_systemsong()
+
         self.length = 0
         self.gap = 0
-        self.rotation = 0 #system
-        self.artist = 'Phish' #system
-        self.debut = None #system
 
         info('Processed song {}, {}'.format(self.show, self.name))
 
@@ -319,15 +323,19 @@ class Songs():
         song = Songs(show, name, transition_before, transition_after, set_name, notes)
         return song
 
+    def associate_systemsong(self):
+        systemsong = None
+        self.show.model.systemsongs
+        return systemsong
+
     def __str__(self):
         return self.name
     
     def __repr__(self):
         st = ("Show({}, Name{}, transition_before{}, transition_after{}, "
-            "set{}, notes{}, length{}, gap{}, rotation{}, artist{}, "
-            "debut{}").format(self.show, self.name, self.transition_before, 
-            self.transition_after, self.set, self.notes, self.length, self.gap,
-            self.rotation, self.artist, self.debut)
+            "set_name{}, notes{}, length{}, gap{}").format(self.show, self.name,
+            self.transition_before, self.transition_after, self.set_name, 
+            self.notes, self.length, self.gap)
         return st
     
     def todict(self):
@@ -348,6 +356,9 @@ class SystemSongs():
 
         self.shows_since_debut = None
         self.rotation = None
+        
+        # debug('SystemSong: {}, {}, {}, {}, {}, {}'.format(
+            # self.name, self.artist, self.times, self.debut, self.last, self.current_gap))
 
         info('Processed SystemSong: {}'.format(self.name))
         if self.aliases != []:
@@ -381,6 +392,15 @@ class SystemSongs():
                 alias_dict[parser.system_song[(i+3)]] = parser.system_song[i]
                 del parser.system_song[(i+3)]
                 del parser.system_song[(i+2)]
+                del parser.system_song[(i+1)]
+                del parser.system_song[i]
+            elif 'Found in Discography' in parser.system_song[(i+2)]:
+                #If the song has never been performed, we dont want to list it
+                del parser.system_song[(i+2)]
+                del parser.system_song[(i+1)]
+                del parser.system_song[i]
+            elif 'Found in Discography' in parser.system_song[(i+1)]:
+                #If the song has never been performed, we dont want to list it
                 del parser.system_song[(i+1)]
                 del parser.system_song[i]
             else:
