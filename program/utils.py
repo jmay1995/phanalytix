@@ -74,3 +74,9 @@ class ArtistVenue_HTMLParser(HTMLParser):
 
     def handle_data(self, data):
         self.item = data
+
+class SystemSong_HTMLParser(HTMLParser):
+
+    def handle_data(self, data):
+        if data != '\n':
+            self.system_song.append(data)

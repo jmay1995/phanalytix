@@ -26,3 +26,7 @@ DATES_ATTENDED = ['2014-07-25', '2015-08-14', '2015-08-15', '2015-08-16',
 
 WORKINGDIR = os.getcwd()
 OUTPUTDIR = os.path.join(os.getcwd(), 'Outputs')
+
+#Details for Scraping System Song original data
+ORIGINAL_ARTIST_URL = 'https://phish.net/song'
+ORIGINAL_ARTIST_TABLE_CLASS = 'table table-striped table-hover table-responsive'

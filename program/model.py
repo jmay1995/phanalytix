@@ -13,9 +13,11 @@ import string
 
 from logging import debug, info
 from collections import OrderedDict
+from bs4 import BeautifulSoup
 
-from program.params import PHISHIN_URL, PHISHNET_URL, PHISHNET_KEY, PHISHNET_PUBLIC, DATES_ATTENDED
-from program.utils import Setlist_HTMLParser, ArtistVenue_HTMLParser
+from program.params import PHISHIN_URL, PHISHNET_URL, PHISHNET_KEY, PHISHNET_PUBLIC,
+                        DATES_ATTENDED, ORIGINAL_ARTIST_URL, ORIGINAL_ARTIST_TABLE_CLASS
+from program.utils import Setlist_HTMLParser, ArtistVenue_HTMLParser, SystemSong_HTMLParser
 
 #Define utility functions for serializing object states
 def listify(list_of_obj):
@@ -53,6 +55,10 @@ class Phanalytix():
         info('List of Dates and Years processed')
         
         self.shows = self.get_showdata_from_dates()
+        info('Show data processed')
+
+        self.systemsongs = self.create_system_songs()
+        info('Non-performance-specific song details read in')
         
     @classmethod
     def load_model(cls, name, shows_attended, years=[], dates=[]):
@@ -119,6 +125,36 @@ class Phanalytix():
                 show = Shows.create_shows(data, self)
                 shows[date] = show
         return shows
+    
+    def create_system_songs(self):
+        '''
+        Scrape Phish.net song history to get data on non-performance-specific
+        song details such as original artist, times played, rotation, debut. etc.
+        '''
+        #Read in HTML code from Phish.Net Songs page
+        html_string = requests.get(ORIGINAL_ARTIST_URL).text
+        #Process HTML into a parseable format
+        soup = BeautifulSoup(html_string, 'lxml')
+        #Save only the text from the table we need
+        song_table = soup.find('table',{'class':ORIGINAL_ARTIST_TABLE_CLASS})
+
+        #Create an object that will store parsed HTML tags
+        parser = ArtistName_HTMLParser()
+        parser.system_song = []
+        #Load HTML code into parser that will load the empty list we just created
+        parser.feed(str(song_table))
+
+        #Loop through list of system song data and load it into an object
+        i = 6
+        while i < len(parser.system_song):
+            i += 6
+            name = parser.system_song[i]
+            artist = parser.system_song[(i+1)]
+            times = parser.system_song[(i+2)]
+            debut = parser.system_song[(i+3)]
+            last = parser.system_song[(i+4)]
+            current_gap = parser.system_song[(i+5)]
+
 
 class Shows():
     def __init__(self, model, name, showid, short_date, artist, venueid, venue, 
@@ -329,6 +365,11 @@ class Songs():
         Output a Dict representation of the model
         '''
         return
+
+class SystemSongs():
+    def __init__(self, name, artist, debut, times, rotation):
+        pass
+
 
     
     
