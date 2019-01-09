@@ -11,7 +11,7 @@ import logging
 import sys
 import string
 
-from logging import debug, info
+from logging import debug, info, warning
 from collections import OrderedDict
 from bs4 import BeautifulSoup
 
@@ -313,6 +313,7 @@ class Songs():
         self.gap = 0
 
         info('Processed song {}, {}'.format(self.show, self.name))
+        # debug('SystemSong: {},{}'.format(self.systemsong.name, self.systemsong.artist))
 
     @classmethod
     def create_song(cls, name, transition_before, transition_after, set_name, notes, show = None):
@@ -324,8 +325,32 @@ class Songs():
         return song
 
     def associate_systemsong(self):
-        systemsong = None
-        self.show.model.systemsongs
+        #Get a list of system songs which share the same title or alias
+        systemsongs = [c for c in self.show.model.systemsongs 
+                        if (self.name==c.name) or (self.name==c.aliases)]
+        
+        if len(systemsongs) == 0:
+            #If there is no system song, then look to match without descriptors
+            temp_name = self.name.replace(" Reprise", "")
+            temp_name = temp_name.replace(" Jam", "")
+            systemsongs = [c for c in self.show.model.systemsongs 
+                             if (temp_name==c.name) or (temp_name==c.aliases)]
+
+        if len(systemsongs) == 0:
+            #Send error if still no System Song aligns with the song performed
+            systemsong = None
+            warning('No SystemSong associated with Song performed ({})'.
+                format(self.name))
+        else:
+            #Assign the first SystemSong in the list to the song performed
+            systemsong = systemsongs[0]
+            # debug('Lookhere: Associating {} with system song {},{}'.format(self.name, systemsong.name, systemsong.artist))
+
+            if len(systemsongs) > 1:
+                #Throw a warning is multiple SystemSongs align with the song
+                warning('Multiple SystemSongs ({}) associated with Song performed ({})'
+                    .format(systemsongs, self.name))
+
         return systemsong
 
     def __str__(self):
@@ -333,9 +358,9 @@ class Songs():
     
     def __repr__(self):
         st = ("Show({}, Name{}, transition_before{}, transition_after{}, "
-            "set_name{}, notes{}, length{}, gap{}").format(self.show, self.name,
-            self.transition_before, self.transition_after, self.set_name, 
-            self.notes, self.length, self.gap)
+            "set_name{}, notes{}, systemsong{}, length{}, gap{}").format(
+            self.show, self.name,self.transition_before, self.transition_after, 
+            self.set_name, self.notes, self.systemsong, self.length, self.gap)
         return st
     
     def todict(self):
