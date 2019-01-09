@@ -337,18 +337,21 @@ class Songs():
         return
 
 class SystemSongs():
-    def __init__(self, name, artist, times, debut, last, current_gap):
+    def __init__(self, name, artist, times, debut, last, current_gap, aliases):
         self.name = name
         self.artist = artist
         self.times = times
         self.debut = debut
         self.last = last
         self.current_gap = current_gap
+        self.aliases = aliases
 
         self.shows_since_debut = None
         self.rotation = None
 
         info('Processed SystemSong: {}'.format(self.name))
+        if self.aliases != []:
+            info('\tSystemSong has aliases: {}'.format(self.aliases))
 
     @classmethod
     def create_system_songs(self):
@@ -369,9 +372,23 @@ class SystemSongs():
         #Load HTML code into parser that will load the empty list we just created
         parser.feed(str(song_table))
 
-        #Loop through list of system song data and load it into an list of object
-        systemsong_list = []
+        #Loop through list of system song data and create dict of Aliases ahead of time
+        alias_dict = {}
         i = 6
+        while i < len(parser.system_song):
+            if 'Alias of' in parser.system_song[(i+2)]:
+                #If the listing are for a song name alias, record and delete
+                alias_dict[parser.system_song[(i+3)]] = parser.system_song[i]
+                del parser.system_song[(i+3)]
+                del parser.system_song[(i+2)]
+                del parser.system_song[(i+1)]
+                del parser.system_song[i]
+            else:
+                i += 6
+
+        #Loop through list of system song data and load it into an list of objects
+        systemsong_list = []
+        i = 6   
         while i < len(parser.system_song):
             name = parser.system_song[i]
             artist = parser.system_song[(i+1)]
@@ -380,12 +397,18 @@ class SystemSongs():
             last = parser.system_song[(i+4)]
             current_gap = parser.system_song[(i+5)]
 
+            aliases = []
+            for k, v in alias_dict.items():
+                if k == name:
+                    aliases.append(v)
+                if v == name:
+                    aliases.append(k)
+
             #Create a SystemSong object and add it to the list to return
-            systemsong = SystemSongs(name, artist, times, debut, last, current_gap)
+            systemsong = SystemSongs(name, artist, times, debut, last, current_gap, aliases)
             systemsong_list.append(systemsong)
 
             i += 6
-        
         return systemsong_list
 
     def calculate_rotation(self):
@@ -395,10 +418,10 @@ class SystemSongs():
         return self.name
     
     def __repr__(self):
-        st = ("SystemSong(name{}, artist{}, times{}, debut{}, last{}, "
-            "current_gap{}, shows_since_debut{}, rotation{})").format(self.name,
+        st = ("SystemSong(name{}, artist{}, times{}, debut{}, last{}, current_gap{}, "
+            "aliases{}, shows_since_debut{}, rotation{})").format(self.name,
             self.artist, self.times, self.debut, self.last, self.current_gap,
-            self.shows_since_debut, self.rotation)
+            self.aliases, self.shows_since_debut, self.rotation)
         return st
     
     def todict(self):
