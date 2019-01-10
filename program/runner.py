@@ -14,7 +14,7 @@ from program.params import DATES_ATTENDED
 def runner(years, dates):
 
     # Load the object Model with Show Data
-    model = Phanalytix.load_model('Phanalytix', DATES_ATTENDED, years, dates)
+    model = Phanalytix('Phanalytix', DATES_ATTENDED, years, dates)
 
     #Parse contents as dataFrames and write to file
     outputs = WriteOutputs(model)

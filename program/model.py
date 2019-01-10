@@ -68,12 +68,6 @@ class Phanalytix():
 
         self.shows = self.get_showdata_from_dates()
         info('Show data processed')
-        
-    @classmethod
-    def load_model(cls, name, shows_attended, years=[], dates=[]):
-        info('Loading model')
-        phanalytix = Phanalytix(name, shows_attended, years, dates)
-        return phanalytix
     
     def __str__(self):
         return self.name
@@ -300,8 +294,6 @@ class Shows():
                                         if multiple_tags == False:   
                                             del setlist[x]
                                             break
-
-
 
                         #Create an instance of the Song class for this show
                         song = Songs.create_song(name, transition_before, transition_after, set_name, notes, self)
