@@ -3,3 +3,9 @@ notebooks/
 Outputs/
 .ipynb_checkpoints
 __pycache__
+program.prof
+.coverage
+htmlcov/
+*.log
+*.ipynb
+.vscode/
