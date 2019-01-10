@@ -13,19 +13,19 @@ Developed by: Joseph May, 919-600-4688, josephmay95@hotmail.com
 
   *You must use a python interpreter and not an ipython interpreter to use these optional year and date parameters*
 
-  **if you wish to specify years:**
-    * python bin/run_phanalytix --years=2018
-    * python bin/run_phanalytix --years="2015 2016 2017 2018"
+**if you wish to specify years:**
+  * python bin/run_phanalytix --years=2018
+  * python bin/run_phanalytix --years="2015 2016 2017 2018"
 
-  **if you wish to specify a specific date:**
-    * python bin/run_phanalytix --dates="2003-02-23"
-    * python bin/run_phanalytix --dates="2003-02-23 1997-10-17 1999-12-31"
-    
-  **to write outputs to a log:**
-    * python bin/run_phanalytix | tee writeoutput.log
+**if you wish to specify a specific date:**
+  * python bin/run_phanalytix --dates="2003-02-23"
+  * python bin/run_phanalytix --dates="2003-02-23 1997-10-17 1999-12-31"
+  
+**to write outputs to a log:**
+  * python bin/run_phanalytix | tee writeoutput.log
 
 
-**How to run coverage report:**
+**How to run coverage report:** 
   * *pip install coverage*
   * coverage run bin/run_phananlytix
   * coverage report
