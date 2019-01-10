@@ -23,7 +23,8 @@ from program.params import (PHISHIN_URL,
                             DATES_ATTENDED,
                             ORIGINAL_ARTIST_URL,
                             ORIGINAL_ARTIST_TABLE_CLASS,
-                            NON_COVER_ARTISTS)
+                            NON_COVER_ARTISTS,
+                            DATES_TO_EXCLUDE)
 
 #Define utility functions for serializing object states
 def listify(list_of_obj):
@@ -57,6 +58,9 @@ class Phanalytix():
             self.years = years.split(' ')
             self.dates = self.get_dates_from_years()
             self.dates.extend(dates.split(' '))
+        
+        #Exclude dates from radio/TV specials with non processable songs
+        self.dates = [c for c in self.dates if c not in DATES_TO_EXCLUDE]
         info('List of Dates and Years processed')
 
         self.systemsongs = SystemSongs.create_system_songs()
@@ -228,7 +232,7 @@ class Shows():
         parser.feed(self.setlist)
         setlist = parser.setlist.copy()
 
-        set_ids = ['Set 1', 'Set 2', 'Set 3', 'Encore', 'Encore 2']
+        set_ids = ['Set 1', 'Set 2', 'Set 3', 'Set 4', 'Set 5', 'Encore', 'Encore 2']
 
         #remove blanks from the list
         try:
@@ -353,9 +357,14 @@ class Songs():
             # debug('Lookhere: Associating {} with system song {},{}'.format(self.name, systemsong.name, systemsong.artist))
 
             if len(systemsongs) > 1:
-                #Throw a warning is multiple SystemSongs align with the song
-                warning('Multiple SystemSongs ({}) associated with Song performed ({})'
-                    .format(systemsongs, self.name))
+                #FIXME: This is a very hard coded exception, find workaround
+                if self.name == "Let's Go":
+                    if self.show.name[:4] != '1991':
+                        systemsong = systemsongs[1]
+                else:
+                    #Throw a warning is multiple SystemSongs align with the song
+                    warning('Multiple SystemSongs ({}) associated with Song performed ({})'
+                        .format(systemsongs, self.name))
 
         return systemsong
 
@@ -456,8 +465,6 @@ class SystemSongs():
             for k, v in alias_dict.items():
                 if k == name:
                     aliases.append(v)
-                if v == name:
-                    aliases.append(k)
 
             #Create a SystemSong object and add it to the list to return
             systemsong = SystemSongs(name, artist, times, debut, last, current_gap, aliases)

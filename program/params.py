@@ -36,3 +36,5 @@ NON_COVER_ARTISTS = ['Phish', 'Trey Anastasio', 'Page McConnell', 'Mike Gordon',
                     'New York!', 'Vida Blue', 'Pork Tornado', 'Touchpants', 
                     'Space Antelope', 'Steve Pollak', 'The Dude of Life', 
                     'The Dude of Life and Phish', 'Jeff Holdsworth']
+
+DATES_TO_EXCLUDE = ['1997-02-26', '1998-08-14', '2009-10-29', '2010-03-15']
