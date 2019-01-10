@@ -19,7 +19,6 @@ from program.utils import Setlist_HTMLParser, ArtistVenue_HTMLParser, SystemSong
 from program.params import (PHISHIN_URL,
                             PHISHNET_URL,
                             PHISHNET_KEY,
-                            PHISHNET_PUBLIC,
                             DATES_ATTENDED,
                             ORIGINAL_ARTIST_URL,
                             ORIGINAL_ARTIST_TABLE_CLASS,

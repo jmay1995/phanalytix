@@ -10,9 +10,6 @@ PHISHNET_URL = 'https://api.phish.net/v3/'
 #Phish.Net API Key
 PHISHNET_KEY = 'E972636BCF5D4EF75256'
 
-# Phish.net Public Key
-PHISHNET_PUBLIC = '4A474082F30E6491601A'
-
 # List of shows Attended
 DATES_ATTENDED = ['2014-07-25', '2015-08-14', '2015-08-15', '2015-08-16',
                 '2016-06-24', '2016-06-25', '2016-06-26', '2016-08-26',
