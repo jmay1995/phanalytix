@@ -26,3 +26,15 @@ DATES_ATTENDED = ['2014-07-25', '2015-08-14', '2015-08-15', '2015-08-16',
 
 WORKINGDIR = os.getcwd()
 OUTPUTDIR = os.path.join(os.getcwd(), 'Outputs')
+
+#Details for Scraping System Song original data
+ORIGINAL_ARTIST_URL = 'https://phish.net/song'
+ORIGINAL_ARTIST_TABLE_CLASS = 'table table-striped table-hover table-responsive'
+
+NON_COVER_ARTISTS = ['Phish', 'Trey Anastasio', 'Page McConnell', 'Mike Gordon',
+                    'Mike Gordon Band', 'Jon Fishman', 'Tom Marshall', 'Amfibian',
+                    'New York!', 'Vida Blue', 'Pork Tornado', 'Touchpants', 
+                    'Space Antelope', 'Steve Pollak', 'The Dude of Life', 
+                    'The Dude of Life and Phish', 'Jeff Holdsworth']
+
+DATES_TO_EXCLUDE = ['1997-02-26', '1998-08-14', '2009-10-29', '2010-03-15']

@@ -11,11 +11,20 @@ import logging
 import sys
 import string
 
-from logging import debug, info
+from logging import debug, info, warning
 from collections import OrderedDict
+from bs4 import BeautifulSoup
 
-from program.params import PHISHIN_URL, PHISHNET_URL, PHISHNET_KEY, PHISHNET_PUBLIC, DATES_ATTENDED
-from program.utils import Setlist_HTMLParser, ArtistVenue_HTMLParser
+from program.utils import Setlist_HTMLParser, ArtistVenue_HTMLParser, SystemSong_HTMLParser
+from program.params import (PHISHIN_URL,
+                            PHISHNET_URL,
+                            PHISHNET_KEY,
+                            PHISHNET_PUBLIC,
+                            DATES_ATTENDED,
+                            ORIGINAL_ARTIST_URL,
+                            ORIGINAL_ARTIST_TABLE_CLASS,
+                            NON_COVER_ARTISTS,
+                            DATES_TO_EXCLUDE)
 
 #Define utility functions for serializing object states
 def listify(list_of_obj):
@@ -49,10 +58,16 @@ class Phanalytix():
             self.years = years.split(' ')
             self.dates = self.get_dates_from_years()
             self.dates.extend(dates.split(' '))
-
-        info('List of Dates and Years processed')
         
+        #Exclude dates from radio/TV specials with non processable songs
+        self.dates = [c for c in self.dates if c not in DATES_TO_EXCLUDE]
+        info('List of Dates and Years processed')
+
+        self.systemsongs = SystemSongs.create_system_songs()
+        info('Non-performance-specific song details read in')
+
         self.shows = self.get_showdata_from_dates()
+        info('Show data processed')
         
     @classmethod
     def load_model(cls, name, shows_attended, years=[], dates=[]):
@@ -120,6 +135,7 @@ class Phanalytix():
                 shows[date] = show
         return shows
 
+
 class Shows():
     def __init__(self, model, name, showid, short_date, artist, venueid, venue, 
                  location, city, state, country, setlist, notes, rating):
@@ -172,7 +188,12 @@ class Shows():
         #Break up Location into items for City, State, and Country
         location_list = location.split(', ')
         location_list = [c for c in location_list if c != '']
-        (city, state, country) = location_list
+
+        if len(location_list) == 2:
+            (city, country) = location_list
+            state = country
+        else:
+            (city, state, country) = location_list
 
     
         #Create an object of the Shows class to pass back into a list of shows
@@ -211,7 +232,7 @@ class Shows():
         parser.feed(self.setlist)
         setlist = parser.setlist.copy()
 
-        set_ids = ['Set 1', 'Set 2', 'Set 3', 'Encore', 'Encore 2']
+        set_ids = ['Set 1', 'Set 2', 'Set 3', 'Set 4', 'Set 5', 'Encore', 'Encore 2']
 
         #remove blanks from the list
         try:
@@ -296,13 +317,13 @@ class Songs():
         self.set_name = set_name
         self.notes = notes
 
+        self.systemsong = self.associate_systemsong()
+
         self.length = 0
         self.gap = 0
-        self.rotation = 0 #system
-        self.artist = 'Phish' #system
-        self.debut = None #system
 
         info('Processed song {}, {}'.format(self.show, self.name))
+        # debug('SystemSong: {},{}'.format(self.systemsong.name, self.systemsong.artist))
 
     @classmethod
     def create_song(cls, name, transition_before, transition_after, set_name, notes, show = None):
@@ -313,15 +334,48 @@ class Songs():
         song = Songs(show, name, transition_before, transition_after, set_name, notes)
         return song
 
+    def associate_systemsong(self):
+        #Get a list of system songs which share the same title or alias
+        systemsongs = [c for c in self.show.model.systemsongs 
+                        if (self.name==c.name) or (self.name==c.aliases)]
+        
+        if len(systemsongs) == 0:
+            #If there is no system song, then look to match without descriptors
+            temp_name = self.name.replace(" Reprise", "")
+            temp_name = temp_name.replace(" Jam", "")
+            systemsongs = [c for c in self.show.model.systemsongs 
+                             if (temp_name==c.name) or (temp_name==c.aliases)]
+
+        if len(systemsongs) == 0:
+            #Send error if still no System Song aligns with the song performed
+            systemsong = None
+            warning('No SystemSong associated with Song performed ({})'.
+                format(self.name))
+        else:
+            #Assign the first SystemSong in the list to the song performed
+            systemsong = systemsongs[0]
+            # debug('Lookhere: Associating {} with system song {},{}'.format(self.name, systemsong.name, systemsong.artist))
+
+            if len(systemsongs) > 1:
+                #FIXME: This is a very hard coded exception, find workaround
+                if self.name == "Let's Go":
+                    if self.show.name[:4] != '1991':
+                        systemsong = systemsongs[1]
+                else:
+                    #Throw a warning is multiple SystemSongs align with the song
+                    warning('Multiple SystemSongs ({}) associated with Song performed ({})'
+                        .format(systemsongs, self.name))
+
+        return systemsong
+
     def __str__(self):
         return self.name
     
     def __repr__(self):
         st = ("Show({}, Name{}, transition_before{}, transition_after{}, "
-            "set{}, notes{}, length{}, gap{}, rotation{}, artist{}, "
-            "debut{}").format(self.show, self.name, self.transition_before, 
-            self.transition_after, self.set, self.notes, self.length, self.gap,
-            self.rotation, self.artist, self.debut)
+            "set_name{}, notes{}, systemsong{}, length{}, gap{}").format(
+            self.show, self.name,self.transition_before, self.transition_after, 
+            self.set_name, self.notes, self.systemsong, self.length, self.gap)
         return st
     
     def todict(self):
@@ -330,6 +384,110 @@ class Songs():
         '''
         return
 
+class SystemSongs():
+    def __init__(self, name, artist, times, debut, last, current_gap, aliases):
+        self.name = name
+        self.artist = artist
+        self.times = times
+        self.debut = debut
+        self.last = last
+        self.current_gap = current_gap
+        self.aliases = aliases
+
+        self.cover = 0
+        if self.artist not in NON_COVER_ARTISTS:
+            self.cover = 1
+
+        self.shows_since_debut = None
+        self.rotation = None
+        
+        # debug('SystemSong: {}, {}, {}, {}, {}, {}'.format(
+            # self.name, self.artist, self.times, self.debut, self.last, self.current_gap))
+
+        info('Processed SystemSong: {}'.format(self.name))
+        if self.aliases != []:
+            info('\tSystemSong has aliases: {}'.format(self.aliases))
+
+    @classmethod
+    def create_system_songs(self):
+        '''
+        Scrape Phish.net song history to get data on non-performance-specific
+        song details such as original artist, times played, rotation, debut. etc.
+        '''
+        #Read in HTML code from Phish.Net Songs page
+        html_string = requests.get(ORIGINAL_ARTIST_URL).text
+        #Process HTML into a parseable format
+        soup = BeautifulSoup(html_string, 'lxml')
+        #Save only the text from the table we need
+        song_table = soup.find('table',{'class':ORIGINAL_ARTIST_TABLE_CLASS})
+
+        #Create an object that will store parsed HTML tags
+        parser = SystemSong_HTMLParser()
+        parser.system_song = []
+        #Load HTML code into parser that will load the empty list we just created
+        parser.feed(str(song_table))
+
+        #Loop through list of system song data and create dict of Aliases ahead of time
+        alias_dict = {}
+        i = 6
+        while i < len(parser.system_song):
+            if 'Alias of' in parser.system_song[(i+2)]:
+                #If the listing are for a song name alias, record and delete
+                alias_dict[parser.system_song[(i+3)]] = parser.system_song[i]
+                del parser.system_song[(i+3)]
+                del parser.system_song[(i+2)]
+                del parser.system_song[(i+1)]
+                del parser.system_song[i]
+            elif 'Found in Discography' in parser.system_song[(i+2)]:
+                #If the song has never been performed, we dont want to list it
+                del parser.system_song[(i+2)]
+                del parser.system_song[(i+1)]
+                del parser.system_song[i]
+            elif 'Found in Discography' in parser.system_song[(i+1)]:
+                #If the song has never been performed, we dont want to list it
+                del parser.system_song[(i+1)]
+                del parser.system_song[i]
+            else:
+                i += 6
+
+        #Loop through list of system song data and load it into an list of objects
+        systemsong_list = []
+        i = 6   
+        while i < len(parser.system_song):
+            name = parser.system_song[i]
+            artist = parser.system_song[(i+1)]
+            times = parser.system_song[(i+2)]
+            debut = parser.system_song[(i+3)]
+            last = parser.system_song[(i+4)]
+            current_gap = parser.system_song[(i+5)]
+
+            aliases = []
+            for k, v in alias_dict.items():
+                if k == name:
+                    aliases.append(v)
+
+            #Create a SystemSong object and add it to the list to return
+            systemsong = SystemSongs(name, artist, times, debut, last, current_gap, aliases)
+            systemsong_list.append(systemsong)
+
+            i += 6
+        return systemsong_list
+
+    def calculate_rotation(self):
+        pass
     
+    def __str__(self):
+        return self.name
     
-#scrape data as tracks from http://phish.net/song
+    def __repr__(self):
+        st = ("SystemSong(name{}, artist{}, times{}, debut{}, last{}, current_gap{}, "
+            "aliases{}, cover{}, shows_since_debut{}, rotation{})").format(self.name,
+            self.artist, self.times, self.debut, self.last, self.current_gap,
+            self.aliases, self.cover, self.shows_since_debut, self.rotation)
+        return st
+    
+    def todict(self):
+        '''
+        Output a Dict representation of the model
+        '''
+        return

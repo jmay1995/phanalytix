@@ -51,7 +51,6 @@ class WriteOutputs():
                 outputdict['State'] = show.state
                 outputdict['Country'] = show.country
                 outputdict['Rating'] = show.rating
-                outputdict['Artist'] = show.artist
                 
                 # Bring in song data
                 outputdict['Set'] = song.set_name
@@ -59,8 +58,13 @@ class WriteOutputs():
                 outputdict['Song'] = song.name
                 outputdict['After'] = song.transition_after
                 outputdict['Notes'] = song.notes
-                
-                outputdict['ShowNotes'] = show.notes
+
+                outputdict['Artist'] = song.systemsong.artist
+                outputdict['Cover'] = song.systemsong.cover
+                outputdict['Debut'] = song.systemsong.debut
+                outputdict['Times Played'] = song.systemsong.times
+
+                # outputdict['ShowNotes'] = show.notes
                 
                 row = pd.DataFrame(data = outputdict)
                 self.output_df = self.output_df.append(row, ignore_index=True, sort=False)
@@ -74,3 +78,9 @@ class ArtistVenue_HTMLParser(HTMLParser):
 
     def handle_data(self, data):
         self.item = data
+
+class SystemSong_HTMLParser(HTMLParser):
+
+    def handle_data(self, data):
+        if data != '\n':
+            self.system_song.append(data)
