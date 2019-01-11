@@ -15,15 +15,19 @@ from logging import debug, info, warning
 from collections import OrderedDict
 from bs4 import BeautifulSoup
 
-from program.utils import Setlist_HTMLParser, ArtistVenue_HTMLParser, SystemSong_HTMLParser
+from program.utils import (Setlist_HTMLParser, ArtistVenue_HTMLParser,
+                            SystemSong_HTMLParser, TeaseChart_HTMLParser)
 from program.params import (PHISHIN_URL,
                             PHISHNET_URL,
                             PHISHNET_KEY,
                             DATES_ATTENDED,
                             ORIGINAL_ARTIST_URL,
-                            ORIGINAL_ARTIST_TABLE_CLASS,
-                            NON_COVER_ARTISTS,
-                            DATES_TO_EXCLUDE)
+                            ORIGINAL_ARTIST_CLASS,
+                            ORIGINAL_ARTIST_PHISH,
+                            DATES_TO_EXCLUDE,
+                            TEASE_CHART_URL,
+                            TEASE_CHART_CLASS,
+                            TEASE_CHART_STOPWORDS)
 
 #Define utility functions for serializing object states
 def listify(list_of_obj):
@@ -62,11 +66,16 @@ class Phanalytix():
         self.dates = [c for c in self.dates if c not in DATES_TO_EXCLUDE]
         info('List of Dates and Years processed')
 
-        self.systemsongs = SystemSongs.create_system_songs()
-        info('Non-performance-specific song details read in')
+        # self.systemsongs = SystemSongs.create_system_songs()
+        # info('Non-performance-specific song details read in')
 
-        self.shows = self.get_showdata_from_dates()
-        info('Show data processed')
+        self.teasedict = self.get_tease_data()
+
+        for k, v in self.teasedict.items():
+            print(k, ' - ', v)
+
+        # self.shows = self.get_showdata_from_dates()
+        # info('Show data processed')
     
     def __str__(self):
         return self.name
@@ -128,6 +137,70 @@ class Phanalytix():
                 shows[date] = show
         return shows
 
+    def get_tease_data(self):
+        '''
+        Scrape phish.net tease chart data and compile it into a dictionary
+        We will use this data when generating song objects
+        '''
+        #Read in HTML code from Phish.Net tease chart
+        html_string = requests.get(TEASE_CHART_URL).text
+        #Process HTML into a parseable format
+        soup = BeautifulSoup(html_string, 'lxml')
+        #Save only the text from the table we need
+        my_table = soup.find('table',{'class': TEASE_CHART_CLASS})
+
+        #Create an object that will store parsed HTML tags
+        parser = TeaseChart_HTMLParser()
+        parser.original_artist = []
+        #Load HTML into parser that will load the empty list we just initialized
+        parser.feed(str(my_table))
+        #Name the list made from the processed HTML data
+        tease_list = parser.original_artist
+
+        #Loop Through the list, delete the linebreaks, and flag the start of each song
+        i = 0
+        while i < len(tease_list):
+            if tease_list[i] == "\n":
+                if tease_list[i-1][:5] in TEASE_CHART_STOPWORDS:
+                    #If the value is a linebreak ahead of a year, it is a new song
+                    tease_list[i] = '_____'
+                    i += 1
+                else:
+                    #If it is a linebreak on its own, then delete it- it's just noise
+                    del tease_list[i]
+            else: i += 1
+        #Delete the last item from the list, it's an underscore and causes index errors later
+        del tease_list[-1]
+
+        #Loop through the cleaned list and load all tease data into a dictionary
+        tease_dict = {}
+        for i, val in enumerate(tease_list):
+            if val == '_____':
+                #When we hit a new tease, load the title and artist of the tease
+                tease = tease_list[i+1]
+                artist = tease_list[i+2]
+
+                # print('\n\nTease: {}\t-\t{}'.format(tease, artist))
+                
+                #Look foward and loop through all the listings of times that song was teased
+                idx = i + 4
+                condition = True
+                while condition and idx < len(tease_list):
+                    if tease_list[idx] != '_____':
+                        #Log tease performances into  until you hit a new tease
+                        date = tease_list[idx][:10]
+                        song = tease_list[idx][11:]
+                        # print("\tDate: {}\n\t\tSong: {}".format(date, song))
+                        info('Processing Tease: {} by {} during {} {}'
+                            .format(tease, artist, date, song))
+                        #Add performance details into dictionary as tuples
+                        tease_dict[(date, song)] = (tease, artist)
+                        idx += 1
+                    else:
+                        #Once you hit the new song stop, end the subloop
+                        condition = False
+
+        return tease_dict
 
 class Shows():
     def __init__(self, model, name, showid, short_date, artist, venueid, venue, 
@@ -386,7 +459,7 @@ class SystemSongs():
         self.aliases = aliases
 
         self.cover = 0
-        if self.artist not in NON_COVER_ARTISTS:
+        if self.artist not in ORIGINAL_ARTIST_PHISH:
             self.cover = 1
 
         self.shows_since_debut = None
@@ -410,7 +483,7 @@ class SystemSongs():
         #Process HTML into a parseable format
         soup = BeautifulSoup(html_string, 'lxml')
         #Save only the text from the table we need
-        song_table = soup.find('table',{'class':ORIGINAL_ARTIST_TABLE_CLASS})
+        song_table = soup.find('table',{'class':ORIGINAL_ARTIST_CLASS})
 
         #Create an object that will store parsed HTML tags
         parser = SystemSong_HTMLParser()

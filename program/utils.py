@@ -84,3 +84,9 @@ class SystemSong_HTMLParser(HTMLParser):
     def handle_data(self, data):
         if data != '\n':
             self.system_song.append(data)
+
+class TeaseChart_HTMLParser(HTMLParser):
+
+    def handle_data(self, data):
+        if data != ", ":
+            self.original_artist.append(data)
