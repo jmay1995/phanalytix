@@ -66,17 +66,15 @@ class Phanalytix():
         self.dates = [c for c in self.dates if c not in DATES_TO_EXCLUDE]
         info('List of Dates and Years processed')
 
-        # self.systemsongs = SystemSongs.create_system_songs()
-        # info('Non-performance-specific song details read in')
+        self.systemsongs = SystemSongs.create_system_songs()
+        info('Non-performance-specific song details read in')
 
-        self.teasedict = self.get_tease_data()
+        self.tease_list = self.get_tease_data()
+        info('Tease data read in')
 
-        for k, v in self.teasedict.items():
-            print(k, ' - ', v)
+        self.shows = self.get_showdata_from_dates()
+        info('Show data processed')
 
-        # self.shows = self.get_showdata_from_dates()
-        # info('Show data processed')
-    
     def __str__(self):
         return self.name
     
@@ -173,14 +171,12 @@ class Phanalytix():
         del tease_list[-1]
 
         #Loop through the cleaned list and load all tease data into a dictionary
-        tease_dict = {}
+        processed_teases = []
         for i, val in enumerate(tease_list):
             if val == '_____':
                 #When we hit a new tease, load the title and artist of the tease
                 tease = tease_list[i+1]
                 artist = tease_list[i+2]
-
-                # print('\n\nTease: {}\t-\t{}'.format(tease, artist))
                 
                 #Look foward and loop through all the listings of times that song was teased
                 idx = i + 4
@@ -190,17 +186,18 @@ class Phanalytix():
                         #Log tease performances into  until you hit a new tease
                         date = tease_list[idx][:10]
                         song = tease_list[idx][11:]
-                        # print("\tDate: {}\n\t\tSong: {}".format(date, song))
                         info('Processing Tease: {} by {} during {} {}'
                             .format(tease, artist, date, song))
-                        #Add performance details into dictionary as tuples
-                        tease_dict[(date, song)] = (tease, artist)
+
+                        #Add performance details into list as tuple
+                        tease_tuple = (date, song, tease, artist)
+                        processed_teases.append(tease_tuple)
                         idx += 1
                     else:
                         #Once you hit the new song stop, end the subloop
                         condition = False
 
-        return tease_dict
+        return processed_teases
 
 class Shows():
     def __init__(self, model, name, showid, short_date, artist, venueid, venue, 
@@ -220,6 +217,9 @@ class Shows():
         self.setlist = setlist
         self.notes = notes
         self.rating = rating
+
+        #get the subset of the modelwide teasedict that applies to this date
+        self.tease_list = [c[1:4] for c in self.model.tease_list if c[0]==self.name]
 
         self.songs = self.get_song_data_from_setlist()
 
@@ -276,7 +276,7 @@ class Shows():
                 "rating{})").format(self.name, self.showid, self.short_date, 
                 self.artist, self.venueid, self.venue, self.location, 
                 self.city, self.state, self.country, self.setlist, 
-                self.notes, self.rating)
+                self.notes, self.rating, self.tease_list, self.songs)
         return st
     
     def to_dict(self):
