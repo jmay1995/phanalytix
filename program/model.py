@@ -27,7 +27,8 @@ from program.params import (PHISHIN_URL,
                             DATES_TO_EXCLUDE,
                             TEASE_CHART_URL,
                             TEASE_CHART_CLASS,
-                            TEASE_CHART_STOPWORDS)
+                            TEASE_CHART_STOPWORDS,
+                            SONGNAME_ALIASES)
 
 #Define utility functions for serializing object states
 def listify(list_of_obj):
@@ -223,6 +224,9 @@ class Shows():
 
         self.songs = self.get_song_data_from_setlist()
 
+        # if len(self.tease_list) > 0:
+            # print('Lookhere Teases remaining: {}'.format(self.tease_list))
+
         info('Show data processed for date {} \n'.format(name))
  
         
@@ -273,7 +277,7 @@ class Shows():
     def __repr__(self):
         st = ("Show({}, showid{}, short_date{}, artist{}, venueid{}, venue{}, "
                 "location{}, city{}, state{}, country{}. setlist{}, notes{}, "
-                "rating{})").format(self.name, self.showid, self.short_date, 
+                "rating{}, tease_list{}, songs{})").format(self.name, self.showid, self.short_date, 
                 self.artist, self.venueid, self.venue, self.location, 
                 self.city, self.state, self.country, self.setlist, 
                 self.notes, self.rating, self.tease_list, self.songs)
@@ -381,7 +385,11 @@ class Songs():
         self.set_name = set_name
         self.notes = notes
 
+        #Associate each song to a system song to get non-performance specific details
         self.systemsong = self.associate_systemsong()
+        
+        #Associated teases played with each performance of a song
+        self.teases = self.associate_teases()
 
         self.length = 0
         self.gap = 0
@@ -399,6 +407,11 @@ class Songs():
         return song
 
     def associate_systemsong(self):
+        '''
+        Looks through the list of systemsongs and associates a system song
+        object with this song performance to get non-performance specific
+        details such as: original artist, debut, times played, etc.
+        '''
         #Get a list of system songs which share the same title or alias
         systemsongs = [c for c in self.show.model.systemsongs 
                         if (self.name==c.name) or (self.name==c.aliases)]
@@ -431,6 +444,29 @@ class Songs():
                         .format(systemsongs, self.name))
 
         return systemsong
+
+    def associate_teases(self):
+        '''
+        Looks in the list of teases performed at that show and pairs them with
+        the song that they were played during
+        '''
+        # Initialize an empty list that we will add too
+        teases = []
+        #Loop through list of teases performed at that show and add to object
+        i = 0
+        while i < len(self.show.tease_list):
+            val = self.show.tease_list[i]
+            if (val[0] == self.name) or (val[0] in self.systemsong.aliases):
+                #Pair if the song name or song alias aligns then add it to the list
+                teases.append('{} by {}'.format(val[1], val[2]))
+                #Remove the action from the show tease list so we can track
+                #If any teases are leftover and didnt line up
+                del self.show.tease_list[i]
+            else:
+                #If a tease didnt happen during this song then keep iterating
+                i += 1
+
+        return teases
 
     def __str__(self):
         return self.name
@@ -525,7 +561,8 @@ class SystemSongs():
             last = parser.system_song[(i+4)]
             current_gap = parser.system_song[(i+5)]
 
-            aliases = []
+            aliases = [SONGNAME_ALIASES[c] for c in SONGNAME_ALIASES.keys()
+                        if c == name]
             for k, v in alias_dict.items():
                 if k == name:
                     aliases.append(v)
