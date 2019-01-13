@@ -57,6 +57,8 @@ class WriteOutputs():
                 outputdict['Before'] = song.transition_before
                 outputdict['Song'] = song.name
                 outputdict['After'] = song.transition_after
+
+                outputdict['Teases'] = ", ".join(song.teases)
                 outputdict['Notes'] = song.notes
 
                 outputdict['Artist'] = song.systemsong.artist
@@ -84,3 +86,9 @@ class SystemSong_HTMLParser(HTMLParser):
     def handle_data(self, data):
         if data != '\n':
             self.system_song.append(data)
+
+class TeaseChart_HTMLParser(HTMLParser):
+
+    def handle_data(self, data):
+        if data != ", ":
+            self.original_artist.append(data)
