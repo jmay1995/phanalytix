@@ -224,10 +224,11 @@ class Shows():
 
         self.songs = self.get_song_data_from_setlist()
 
-        # if len(self.tease_list) > 0:
-            # print('Lookhere Teases remaining: {}'.format(self.tease_list))
-
         info('Show data processed for date {} \n'.format(name))
+        
+        if len(self.tease_list) > 0:
+            info('Teases remaining that could not be paired to a song: {}'
+                .format(self.tease_list))
  
         
     @classmethod
@@ -561,8 +562,9 @@ class SystemSongs():
             last = parser.system_song[(i+4)]
             current_gap = parser.system_song[(i+5)]
 
-            aliases = [SONGNAME_ALIASES[c] for c in SONGNAME_ALIASES.keys()
-                        if c == name]
+            #Get all the manually imputed alias, and contribute to it
+            aliases = [c for c in SONGNAME_ALIASES.keys()
+                        if SONGNAME_ALIASES[c] == name]
             for k, v in alias_dict.items():
                 if k == name:
                     aliases.append(v)
