@@ -57,6 +57,8 @@ class WriteOutputs():
                 outputdict['Before'] = song.transition_before
                 outputdict['Song'] = song.name
                 outputdict['After'] = song.transition_after
+
+                outputdict['Teases'] = ", ".join(song.teases)
                 outputdict['Notes'] = song.notes
 
                 outputdict['Artist'] = song.systemsong.artist
