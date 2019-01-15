@@ -428,7 +428,6 @@ class Songs():
 
         self.duration, self.tags, self.likes = self.associate_song_details()
 
-        self.length = 0
         self.gap = 0
 
         info('Processed song {}, {}'.format(self.show, self.name))
@@ -538,9 +537,11 @@ class Songs():
     
     def __repr__(self):
         st = ("Show({}, Name{}, transition_before{}, transition_after{}, "
-            "set_name{}, notes{}, systemsong{}, length{}, gap{}").format(
+            "set_name{}, notes{}, systemsong{}, teases{}, duration{}, tags{}, "
+            "likes{}").format(
             self.show, self.name,self.transition_before, self.transition_after, 
-            self.set_name, self.notes, self.systemsong, self.length, self.gap)
+            self.set_name, self.notes, self.systemsong, self.teases,
+            self.duration, self.tags, self.likes)
         return st
     
     def todict(self):
