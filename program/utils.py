@@ -46,11 +46,12 @@ class WriteOutputs():
                 # Bring in show based indeces
                 outputdict = OrderedDict(Date = [show.short_date])
                 outputdict['Venue'] = show.venue
-                outputdict['Location'] = show.location
                 outputdict['City'] = show.city
                 outputdict['State'] = show.state
                 outputdict['Country'] = show.country
                 outputdict['Rating'] = show.rating
+
+                outputdict['Likes'] = song.likes
                 
                 # Bring in song data
                 outputdict['Set'] = song.set_name
@@ -58,6 +59,8 @@ class WriteOutputs():
                 outputdict['Song'] = song.name
                 outputdict['After'] = song.transition_after
 
+                outputdict['Duration'] = song.duration
+                outputdict['Tags'] = ", ".join(song.tags)
                 outputdict['Teases'] = ", ".join(song.teases)
                 outputdict['Notes'] = song.notes
 

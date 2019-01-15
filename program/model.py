@@ -11,6 +11,8 @@ import logging
 import sys
 import string
 
+import numpy as np
+
 from logging import debug, info, warning
 from collections import OrderedDict
 from bs4 import BeautifulSoup
@@ -222,13 +224,23 @@ class Shows():
         #get the subset of the modelwide teasedict that applies to this date
         self.tease_list = [c[1:4] for c in self.model.tease_list if c[0]==self.name]
 
+        self.song_details = self.get_performance_details()
+
         self.songs = self.get_song_data_from_setlist()
 
         info('Show data processed for date {} \n'.format(name))
         
+        #Check for places where Phish.Net did not merge with Phish.In data
         if len(self.tease_list) > 0:
-            info('Teases remaining that could not be paired to a song: {}'
+            warning('Teases remaining that could not be paired to a song: {}'
                 .format(self.tease_list))
+        if len(self.song_details) > 0:
+            warning('Song details remining that could not be paired to a song: {}'
+                .format(self.song_details))
+
+        #delete the info that we only needed for loading individual songs
+        del self.tease_list
+        del self.song_details
  
         
     @classmethod
@@ -278,10 +290,10 @@ class Shows():
     def __repr__(self):
         st = ("Show({}, showid{}, short_date{}, artist{}, venueid{}, venue{}, "
                 "location{}, city{}, state{}, country{}. setlist{}, notes{}, "
-                "rating{}, tease_list{}, songs{})").format(self.name, self.showid, self.short_date, 
+                "rating{}, songs{})").format(self.name, self.showid, self.short_date, 
                 self.artist, self.venueid, self.venue, self.location, 
                 self.city, self.state, self.country, self.setlist, 
-                self.notes, self.rating, self.tease_list, self.songs)
+                self.notes, self.rating, self.songs)
         return st
     
     def to_dict(self):
@@ -377,6 +389,28 @@ class Shows():
                         songs[name] = song
         return songs
 
+    def get_performance_details(self):
+        #Get the API URL for this specific show
+        url_show = (PHISHIN_URL + '/shows/' + self.name)
+        #Parse API data as JSON format
+        response = requests.get(url_show).json()
+        data = response['data']
+
+        #Create an empty list that we will load with each of the songs
+        song_details = []
+        #Loop through all the show data and create an tuple for each song played
+        for track in data['tracks']:
+            name = track['title']
+            duration = track['duration']
+            tags = track['tags']
+            #Combine the user submitted like count for the song and show into a composite number
+            likes = track['likes_count'] + data['likes_count']
+            #Load all the details into a tuple, and compile each tuple into a list
+            track_tuple = (name, duration, tags, likes)
+            song_details.append(track_tuple)
+
+        return song_details
+
 class Songs():
     def __init__(self, show, name, transition_before, transition_after, set_name, notes):
         self.show = show
@@ -392,7 +426,8 @@ class Songs():
         #Associated teases played with each performance of a song
         self.teases = self.associate_teases()
 
-        self.length = 0
+        self.duration, self.tags, self.likes = self.associate_song_details()
+
         self.gap = 0
 
         info('Processed song {}, {}'.format(self.show, self.name))
@@ -432,8 +467,7 @@ class Songs():
         else:
             #Assign the first SystemSong in the list to the song performed
             systemsong = systemsongs[0]
-            # debug('Lookhere: Associating {} with system song {},{}'.format(self.name, systemsong.name, systemsong.artist))
-
+            
             if len(systemsongs) > 1:
                 #FIXME: This is a very hard coded exception, find workaround
                 if self.name == "Let's Go":
@@ -469,14 +503,45 @@ class Songs():
 
         return teases
 
+    def associate_song_details(self):
+        #Create default values to return if we do not find a match
+        duration = np.nan
+        tags = []
+        likes = np.nan
+
+        #Establish our loop indeces and conditions
+        i = 0
+        condition = True
+        #Loop through list of tuples to find the song we align with
+        while i < len(self.show.song_details) and condition:
+            if (self.name == self.show.song_details[i][0]) or\
+                (self.show.song_details[i][0] in self.systemsong.aliases):
+                #Pair the details with the song if they share a name or alias
+
+                #Extract values from the Tuple to be returned to the object
+                duration = self.show.song_details[i][1]
+                tags = self.show.song_details[i][2]
+                likes = self.show.song_details[i][3]
+                #Once we have assigned song details, delete it from the list
+                # This is a safeguard for when they play a song twice in a show
+                del self.show.song_details[i]
+                #Stop the loop so we dont hit another match and overwrite
+                condition = False
+            else: 
+                #Iterate through the list until we find a match
+                i += 1
+        return duration, tags, likes
+
     def __str__(self):
         return self.name
     
     def __repr__(self):
         st = ("Show({}, Name{}, transition_before{}, transition_after{}, "
-            "set_name{}, notes{}, systemsong{}, length{}, gap{}").format(
+            "set_name{}, notes{}, systemsong{}, teases{}, duration{}, tags{}, "
+            "likes{}").format(
             self.show, self.name,self.transition_before, self.transition_after, 
-            self.set_name, self.notes, self.systemsong, self.length, self.gap)
+            self.set_name, self.notes, self.systemsong, self.teases,
+            self.duration, self.tags, self.likes)
         return st
     
     def todict(self):
