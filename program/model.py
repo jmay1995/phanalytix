@@ -222,6 +222,8 @@ class Shows():
         #get the subset of the modelwide teasedict that applies to this date
         self.tease_list = [c[1:4] for c in self.model.tease_list if c[0]==self.name]
 
+        self.song_details = self.get_performance_details()
+
         self.songs = self.get_song_data_from_setlist()
 
         info('Show data processed for date {} \n'.format(name))
@@ -376,6 +378,28 @@ class Shows():
                         song = Songs.create_song(name, transition_before, transition_after, set_name, notes, self)
                         songs[name] = song
         return songs
+
+    def get_performance_details(self):
+        #Get the API URL for this specific show
+        url_show = (PHISHIN_URL + '/shows/' + self.name)
+        #Parse API data as JSON format
+        response = requests.get(url_show).json()
+        data = response['data']
+
+        #Create an empty list that we will load with each of the songs
+        song_details = []
+        #Loop through all the show data and create an tuple for each song played
+        for track in data['tracks']:
+            name = track['title']
+            duration = track['duration']
+            tags = track['tags']
+            #Combine the user submitted like count for the song and show into a composite number
+            likes = track['likes_count'] + data['likes_count']
+            #Load all the details into a tuple, and compile each tuple into a list
+            track_tuple = (name, duration, tags, likes)
+            song_details.append(track_tuple)
+
+        return song_details
 
 class Songs():
     def __init__(self, show, name, transition_before, transition_after, set_name, notes):
