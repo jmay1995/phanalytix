@@ -11,6 +11,8 @@ import logging
 import sys
 import string
 
+import numpy as np
+
 from logging import debug, info, warning
 from collections import OrderedDict
 from bs4 import BeautifulSoup
@@ -228,9 +230,17 @@ class Shows():
 
         info('Show data processed for date {} \n'.format(name))
         
+        #Check for places where Phish.Net did not merge with Phish.In data
         if len(self.tease_list) > 0:
-            info('Teases remaining that could not be paired to a song: {}'
+            warning('Teases remaining that could not be paired to a song: {}'
                 .format(self.tease_list))
+        if len(self.song_details) > 0:
+            warning('Song details remining that could not be paired to a song: {}'
+                .format(self.song_details))
+
+        #delete the info that we only needed for loading individual songs
+        del self.tease_list
+        del self.song_details
  
         
     @classmethod
@@ -280,10 +290,10 @@ class Shows():
     def __repr__(self):
         st = ("Show({}, showid{}, short_date{}, artist{}, venueid{}, venue{}, "
                 "location{}, city{}, state{}, country{}. setlist{}, notes{}, "
-                "rating{}, tease_list{}, songs{})").format(self.name, self.showid, self.short_date, 
+                "rating{}, songs{})").format(self.name, self.showid, self.short_date, 
                 self.artist, self.venueid, self.venue, self.location, 
                 self.city, self.state, self.country, self.setlist, 
-                self.notes, self.rating, self.tease_list, self.songs)
+                self.notes, self.rating, self.songs)
         return st
     
     def to_dict(self):
@@ -416,6 +426,8 @@ class Songs():
         #Associated teases played with each performance of a song
         self.teases = self.associate_teases()
 
+        self.duration, self.tags, self.likes = self.associate_song_details()
+
         self.length = 0
         self.gap = 0
 
@@ -456,8 +468,7 @@ class Songs():
         else:
             #Assign the first SystemSong in the list to the song performed
             systemsong = systemsongs[0]
-            # debug('Lookhere: Associating {} with system song {},{}'.format(self.name, systemsong.name, systemsong.artist))
-
+            
             if len(systemsongs) > 1:
                 #FIXME: This is a very hard coded exception, find workaround
                 if self.name == "Let's Go":
@@ -492,6 +503,35 @@ class Songs():
                 i += 1
 
         return teases
+
+    def associate_song_details(self):
+        #Create default values to return if we do not find a match
+        duration = np.nan
+        tags = []
+        likes = np.nan
+
+        #Establish our loop indeces and conditions
+        i = 0
+        condition = True
+        #Loop through list of tuples to find the song we align with
+        while i < len(self.show.song_details) and condition:
+            if (self.name == self.show.song_details[i][0]) or\
+                (self.show.song_details[i][0] in self.systemsong.aliases):
+                #Pair the details with the song if they share a name or alias
+
+                #Extract values from the Tuple to be returned to the object
+                duration = self.show.song_details[i][1]
+                tags = self.show.song_details[i][2]
+                likes = self.show.song_details[i][3]
+                #Once we have assigned song details, delete it from the list
+                # This is a safeguard for when they play a song twice in a show
+                del self.show.song_details[i]
+                #Stop the loop so we dont hit another match and overwrite
+                condition = False
+            else: 
+                #Iterate through the list until we find a match
+                i += 1
+        return duration, tags, likes
 
     def __str__(self):
         return self.name
