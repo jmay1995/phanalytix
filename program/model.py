@@ -348,7 +348,7 @@ class Shows():
                             transition_after = setlist[(i+1)]
                             
                         #Ensure that we do not reference the name of the set as a transition
-                        if transition_after in set_ids:
+                        if (transition_after in set_ids):
                             transition_after = ':'
 
                         #Do not count song notes as transition data
@@ -359,6 +359,12 @@ class Shows():
                                 transition_after = ':'
                             else:
                                 transition_after = setlist[(i+2)]
+                                
+                                #Once we have assigned a foward index, verify 
+                                #again that it is not notes from the end of show
+                                if ('[' in transition_after or transition_after in set_ids):
+                                    transition_after = ':'
+
 
 
                             ###################################################
