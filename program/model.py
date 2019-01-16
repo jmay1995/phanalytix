@@ -348,7 +348,7 @@ class Shows():
                             transition_after = setlist[(i+1)]
                             
                         #Ensure that we do not reference the name of the set as a transition
-                        if transition_after in set_ids:
+                        if (transition_after in set_ids):
                             transition_after = ':'
 
                         #Do not count song notes as transition data
@@ -359,6 +359,12 @@ class Shows():
                                 transition_after = ':'
                             else:
                                 transition_after = setlist[(i+2)]
+                                
+                                #Once we have assigned a foward index, verify 
+                                #again that it is not notes from the end of show
+                                if ('[' in transition_after or transition_after in set_ids):
+                                    transition_after = ':'
+
 
 
                             ###################################################
@@ -377,7 +383,7 @@ class Shows():
                                     if len(setlist[x]) <= 3:
                                         multiple_tags = True
                                     else:
-                                        notes = setlist[x]
+                                        notes = setlist[x][4:]
 
                                         #Do not delete the data if there are other tags that need it
                                         if multiple_tags == False:   
@@ -427,8 +433,6 @@ class Songs():
         self.teases = self.associate_teases()
 
         self.duration, self.tags, self.likes = self.associate_song_details()
-
-        self.gap = 0
 
         info('Processed song {}, {}'.format(self.show, self.name))
         # debug('SystemSong: {},{}'.format(self.systemsong.name, self.systemsong.artist))
@@ -640,9 +644,6 @@ class SystemSongs():
 
             i += 6
         return systemsong_list
-
-    def calculate_rotation(self):
-        pass
     
     def __str__(self):
         return self.name
