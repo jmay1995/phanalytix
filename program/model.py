@@ -377,7 +377,7 @@ class Shows():
                                     if len(setlist[x]) <= 3:
                                         multiple_tags = True
                                     else:
-                                        notes = setlist[x]
+                                        notes = setlist[x][4:]
 
                                         #Do not delete the data if there are other tags that need it
                                         if multiple_tags == False:   
@@ -427,8 +427,6 @@ class Songs():
         self.teases = self.associate_teases()
 
         self.duration, self.tags, self.likes = self.associate_song_details()
-
-        self.gap = 0
 
         info('Processed song {}, {}'.format(self.show, self.name))
         # debug('SystemSong: {},{}'.format(self.systemsong.name, self.systemsong.artist))
@@ -640,9 +638,6 @@ class SystemSongs():
 
             i += 6
         return systemsong_list
-
-    def calculate_rotation(self):
-        pass
     
     def __str__(self):
         return self.name
