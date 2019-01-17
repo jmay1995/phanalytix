@@ -69,6 +69,10 @@ class WriteOutputs():
                 outputdict['Debut'] = song.systemsong.debut
                 outputdict['Times Played'] = song.systemsong.times
 
+                outputdict['Times Played2'] = song.times_played
+                outputdict['Gap'] = song.gap
+                outputdict['Rotation'] = song.rotation
+
                 # outputdict['ShowNotes'] = show.notes
                 
                 row = pd.DataFrame(data = outputdict)

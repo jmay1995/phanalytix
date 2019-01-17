@@ -239,6 +239,7 @@ class Shows():
                 .format(self.song_details))
 
         #delete the info that we only needed for loading individual songs
+        del self.setlist
         del self.tease_list
         del self.song_details
  
@@ -289,10 +290,10 @@ class Shows():
     
     def __repr__(self):
         st = ("Show({}, showid{}, short_date{}, artist{}, venueid{}, venue{}, "
-                "location{}, city{}, state{}, country{}. setlist{}, notes{}, "
+                "location{}, city{}, state{}, country{}, notes{}, "
                 "rating{}, songs{})").format(self.name, self.showid, self.short_date, 
                 self.artist, self.venueid, self.venue, self.location, 
-                self.city, self.state, self.country, self.setlist, 
+                self.city, self.state, self.country, 
                 self.notes, self.rating, self.songs)
         return st
     
@@ -540,7 +541,7 @@ class Songs():
         return self.name
     
     def __repr__(self):
-        st = ("Show({}, Name{}, transition_before{}, transition_after{}, "
+        st = ("Song({}, Name{}, transition_before{}, transition_after{}, "
             "set_name{}, notes{}, systemsong{}, teases{}, duration{}, tags{}, "
             "likes{}").format(
             self.show, self.name,self.transition_before, self.transition_after, 
@@ -660,3 +661,64 @@ class SystemSongs():
         Output a Dict representation of the model
         '''
         return
+
+class PerformanceStatisticsProcessor():
+    '''
+    Class is feed the full loaded phanalytix model with all scraped data and
+    iterates through every performance to process statistics such as song gap
+    for each performance, cumulative times playes, and song rotation.
+    '''
+    def __init__(self, model):
+        self.model = model
+        
+        self.calculate_performance_statistics()
+
+        info('Performance Statistics Processed')
+
+    def calculate_performance_statistics(self):
+        '''
+        Loop through shows and count how many shows pass between the performance
+        of each song
+        '''
+        #Create an empty dictionary that will store songgaps
+        song_tracker = {}
+        #Tuple = (times played, total shows played, shows since debut, gap, rotation)
+
+        #Keep a counter on shows played
+        show_counter = 0
+        #Loop through every show played
+        for show in self.model.shows.values():
+            #increment the show counter
+            show_counter += 1
+            #Loop through each song performed at that show
+            for song in show.songs.values():
+                if song.name not in song_tracker.keys():
+                    # If the song is being played for the first time
+
+                    # Load a dictionary with details to track metrics to record
+                    song_dict = {
+                        'debut': show_counter,
+                        'last_time_played': show_counter,
+                        'times_played': 1,
+                        'gap' : np.nan,
+                        'rotation' : np.nan
+                    }
+                    # Record song details into song tracker
+                    song_tracker[song.name] = song_dict
+                else:
+                    # Check if the song has been played before
+                    
+                    # Update and increment the song's metrics
+                    song_tracker[song.name]['times_played'] += 1
+                    song_tracker[song.name]['gap'] = (show_counter
+                        - song_tracker[song.name]['last_time_played'])
+                    song_tracker[song.name]['rotation'] = (
+                        float(song_tracker[song.name]['times_played'])
+                        /(show_counter - song_tracker[song.name]['debut']))
+                    song_tracker[song.name]['last_time_played'] = show_counter
+
+                #Take items recorded in song_tracker and write them to object
+                song.times_played = song_tracker[song.name]['times_played']
+                song.gap = song_tracker[song.name]['gap']
+                song.rotation  = song_tracker[song.name]['rotation']
+
