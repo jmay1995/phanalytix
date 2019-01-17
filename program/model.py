@@ -682,10 +682,9 @@ class PerformanceStatisticsProcessor():
         '''
         #Create an empty dictionary that will store songgaps
         song_tracker = {}
-        #Tuple = (times played, total shows played, shows since debut, gap, rotation)
-
         #Keep a counter on shows played
         show_counter = 0
+
         #Loop through every show played
         for show in self.model.shows.values():
             #increment the show counter
@@ -707,18 +706,16 @@ class PerformanceStatisticsProcessor():
                     song_tracker[song.name] = song_dict
                 else:
                     # Check if the song has been played before
+                    song_dict = song_tracker[song.name]
                     
                     # Update and increment the song's metrics
-                    song_tracker[song.name]['times_played'] += 1
-                    song_tracker[song.name]['gap'] = (show_counter
-                        - song_tracker[song.name]['last_time_played'])
-                    song_tracker[song.name]['rotation'] = (
-                        float(song_tracker[song.name]['times_played'])
-                        /(show_counter - song_tracker[song.name]['debut']))
-                    song_tracker[song.name]['last_time_played'] = show_counter
+                    song_dict['times_played'] += 1
+                    song_dict['gap'] = (show_counter - song_dict['last_time_played'])
+                    song_dict['rotation'] = (float(song_dict['times_played'])
+                        /(show_counter - song_dict['debut']))
+                    song_dict['last_time_played'] = show_counter
 
                 #Take items recorded in song_tracker and write them to object
-                song.times_played = song_tracker[song.name]['times_played']
-                song.gap = song_tracker[song.name]['gap']
-                song.rotation  = song_tracker[song.name]['rotation']
-
+                song.times_played = song_dict['times_played']
+                song.gap = song_dict['gap']
+                song.rotation  = song_dict['rotation']

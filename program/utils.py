@@ -5,7 +5,7 @@ import pandas as pd
 from logging import debug, info
 from collections import OrderedDict
 from html.parser import HTMLParser
-from program.params import OUTPUTDIR
+from program.params import OUTPUTDIR, DATES_ATTENDED
 
 class WriteOutputs():
     '''
@@ -72,6 +72,8 @@ class WriteOutputs():
                 outputdict['Times Played2'] = song.times_played
                 outputdict['Gap'] = song.gap
                 outputdict['Rotation'] = song.rotation
+
+                outputdict['Attended'] = show.name in DATES_ATTENDED
 
                 # outputdict['ShowNotes'] = show.notes
                 
