@@ -711,8 +711,8 @@ class PerformanceStatisticsProcessor():
                     # Update and increment the song's metrics
                     song_dict['times_played'] += 1
                     song_dict['gap'] = (show_counter - song_dict['last_time_played'])
-                    song_dict['rotation'] = (float(song_dict['times_played'])
-                        /(show_counter - song_dict['debut']))
+                    song_dict['rotation'] = ((show_counter - song_dict['debut'])
+                        /song_dict['times_played'])
                     song_dict['last_time_played'] = show_counter
 
                 #Take items recorded in song_tracker and write them to object
