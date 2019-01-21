@@ -3,7 +3,7 @@ import click
 
 from logging import debug, info
 
-from program.model import Phanalytix
+from program.model import Phanalytix, PerformanceStatisticsProcessor
 from program.utils import WriteOutputs
 from program.params import DATES_ATTENDED
 
@@ -15,6 +15,9 @@ def runner(years, dates):
 
     # Load the object Model with Show Data
     model = Phanalytix('Phanalytix', DATES_ATTENDED, years, dates)
+
+    # Send the loaded object model to a processor to calculate performance stats
+    model2 = PerformanceStatisticsProcessor(model)
 
     #Parse contents as dataFrames and write to file
     outputs = WriteOutputs(model)
