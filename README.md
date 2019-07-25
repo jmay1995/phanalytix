@@ -35,7 +35,3 @@ Developed by: Joseph May, 919-600-4688, josephmay95@hotmail.com
   4. coverage html
 
 
-**How to view profiler through SnakeViz**
-  1. *pip install snakeviz*
-  2. python -m cProfile -o program.prof bin/run_phanalytix
-  3. snakeviz program.prof
